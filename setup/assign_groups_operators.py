@@ -28,7 +28,7 @@ def draw_callback(self):
         return
     if not self.obj:
         return
-    shader = gpu.shader.from_builtin('3D_FLAT_COLOR')
+    shader = gpu.shader.from_builtin('SMOOTH_COLOR')
     batch = batch_for_shader(
         shader, 'TRIS',
         {"pos": self.vert_data, "color": self.vertex_colors},
@@ -48,9 +48,11 @@ def draw_callback_blf(self):
     x, y = self.cursor_pos
     font_id = 0
     font_offset = 10
-    blf.position(font_id, x + font_offset, y - font_offset * 2, 0)
-    blf.size(font_id, 20, 72)
-    blf.draw(font_id, self.txt)
+    with gpu.matrix.push_pop():
+        gpu.matrix.load_identity()
+        blf.position(font_id, x + font_offset, y - font_offset * 2, 0)
+        blf.size(font_id, 20, 72)
+        blf.draw(font_id, self.txt)
 
 
 class FACEIT_OT_AssignMainModal(bpy.types.Operator):
@@ -840,14 +842,13 @@ class FACEIT_OT_SelectFaceitGroup(bpy.types.Operator):
 
 def draw_group_callback(self):
     '''Draws Wireframe Overlay for given verts/indices'''
-    shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     batch = batch_for_shader(
         shader, 'LINES', {"pos": self.vert_data},
         indices=self.indices)
     shader.uniform_float("color", (0, .8, .2, .1))
 
     gpu.state.depth_test_set('NONE')
-    # bgl.glLineWidth(5)
     # gpu.state.line_width_set(2)
     # gpu.state.point_size_set(5)
     batch.draw(shader)

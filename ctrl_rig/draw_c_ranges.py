@@ -1,4 +1,3 @@
-import bgl
 import bpy
 import gpu
 from bpy.props import BoolProperty, EnumProperty
@@ -343,17 +342,23 @@ class FACEIT_OT_DrawCRanges(bpy.types.Operator):
                     col.extend((b_color,) * len(vertices_for_current_bone))
 
         # get built-in shader (GLSL)
-        shader = gpu.shader.from_builtin('3D_SMOOTH_COLOR')
+        shader = gpu.shader.from_builtin('SMOOTH_COLOR')
         # Uniforms are properties that are constant per draw call.
         # They can be set using the shader.uniform_* functions after the shader has been bound.
 
         batch = batch_for_shader(shader, 'LINES', {"pos": vertices, "color": col})
 
         def draw():
-            bgl.glLineWidth(4)
-            shader.bind()
-            batch.draw(shader)
-            bgl.glLineWidth(1)
+            gpu.state.blend_set('ALPHA')
+            gpu.state.depth_test_set('NONE')
+            gpu.state.line_width_set(4.0)
+            try:
+                shader.bind()
+                batch.draw(shader)
+            finally:
+                gpu.state.line_width_set(1.0)
+                gpu.state.depth_test_set('NONE')
+                gpu.state.blend_set('NONE')
 
         draw_handler = bpy.types.SpaceView3D.draw_handler_add(draw, (), 'WINDOW', 'POST_VIEW')
         print(str(draw_handler))
